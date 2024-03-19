@@ -7,8 +7,8 @@ valid_password = "admin123"
 
 # data for now
 inventory_data = {
-    "Apples": {"Quantity": 10, "price": 2.99},
-    "Bananas": {"Quantity": 5, "price": 1.99},
+    "Apples": {"quantity": 10, "price": 2.99},
+    "Bananas": {"quantity": 5, "price": 1.99},
 }
 
 
