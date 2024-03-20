@@ -1,0 +1,26 @@
+Availability,Product_id,Name,Category,PriceReg,ItemCount,Discount 25,DiscountPrice
+In-Stock,525904,Banana,Food,104.99,15,Yes,78.7425
+In-Stock,3016759,Apple,Food,32.99,26,No,0
+In-Stock,169222,Mango,Food,129.95,22,No,0
+In-Stock,3071053,Nutella,Food,64.95,12,Yes,48.7125
+In-Stock,110699,Rice,Food,120.39,69,Yes,90.2925
+In-Stock,115159,Chips,Food,126.2,33,Yes,94.65
+In-Stock,143125,Popcorn,Food,167.75,20,Yes,125.8125
+In-Stock,144296,Cookies,Food,94.6,33,Yes,70.95
+In-Stock,159588,Brownies,Food,53.95,37,Yes,40.4625
+In-Stock,178701,Iphone 15,Electronic,399.95,34,No,0
+In-Stock,210839,Iphone 14,Electronic,42.95,23,No,0
+In-Stock,210920,Laptop i7,Electronic,97.95,34,No,0
+Sold-Out,251957,Laptop i7,Electronic,70.95,47,No,0
+Sold-Out,3133247,Ps5,Electronic,50,14,No,0
+Sold-Out,51449,Xbox,Electronic,46.75,38,No,0
+Sold-Out,542339,Samsung S20,Electronic,44.95,85,No,0
+Sold-Out,547880,Apple Watch,Electronic,168.25,69,Yes,126.1875
+Sold-Out,561829,Speaker,Electronic,224.95,22,Yes,168.7125
+Sold-Out,567748,Nike T-Shirt,Clothing,77.95,39,Yes,58.4625
+Sold-Out,569884,Adidas T-Shirt,Clothing,74.95,20,Yes,56.2125
+Sold-Out,576667,Nike Joggers,Clothing,123.95,33,Yes,92.9625
+Sold-Out,607032,Adidas Joggers,Clothing,215.31,73,No,0
+Sold-Out,607243,Levi Jeans,Clothing,106.67,23,No,0
+Sold-Out,609142,Polo Shirt,Clothing,69.95,68,No,0
+Sold-Out,617600,Nike Shoes,Clothing,65.25,30,No,0
