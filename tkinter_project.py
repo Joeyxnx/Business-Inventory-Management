@@ -1,15 +1,12 @@
 import tkinter as tk
 from tkinter import messagebox, simpledialog
+import csv
 
 # Log-in Info
 valid_username = "admin"
 valid_password = "admin123"
 
-# data for now
-inventory_data = {
-    "Apples": {"quantity": 10, "price": 2.99},
-    "Bananas": {"quantity": 5, "price": 1.99},
-}
+inventory_data = {}
 
 
 def authenticate(username, password):
@@ -19,12 +16,23 @@ def authenticate(username, password):
         return False
 
 
+def read_inventory_from_csv(filename):
+    with open(filename, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            item_name = row['Name']
+            quantity = int(row['ItemCount'])
+            price = float(row['PriceReg'])
+            inventory_data[item_name] = {'quantity': quantity, 'price': price}
+
+
 def handle_login():
     username = username_entry.get()
     password = password_entry.get()
 
     if authenticate(username, password):
         messagebox.showinfo("Login Successful", "Welcome, " + username + "!")
+        read_inventory_from_csv('SalesKaggle3.csv')  # Read inventory data from CSV file
         open_inventory_window()
     else:
         messagebox.showerror("Login Failed", "Invalid username or password")
