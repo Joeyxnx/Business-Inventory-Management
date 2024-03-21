@@ -85,7 +85,7 @@ def add_item():
             messagebox.showinfo("Add Item", f"{item_name} added to inventory.")
 
 
-# Needs Work
+# NEEDS WORK
 def remove_item():
     item_id = simpledialog.askinteger("Remove Item", "Enter item ID to remove:")
     if item_id in inventory_data:
@@ -93,6 +93,12 @@ def remove_item():
         messagebox.showinfo("Remove Item", f"Item with ID {item_id} removed from inventory.")
     else:
         messagebox.showerror("Remove Item", f"Item with ID {item_id} not found in inventory.")
+
+# NEED TO IMPLEMENT REPORT MISSING FUNCTION
+# NEED TO IMPLEMENT A PRICE DISCOUNT FUNCTION (ASSUME 25% ON SELECT ITEMS)
+# NEED TO IMPLEMENT CATEGORIES FUNCTION (FOOD, ELECTRONICS, CLOTHES ETC.)
+# NEED TO WORK ON INVALID INPUT ON MOST FUNCTIONS
+
 
 
 read_inventory_from_csv('SalesKaggle3.csv')  # Read inventory data from CSV file
