@@ -53,7 +53,6 @@ def view_inventory():
     tree.heading("Price", text="Price")
 
     # Configure Treeview style to center the content
-    tree.tag_configure("center", anchor="center")
     for col in tree["columns"]:
         tree.column(col, anchor="center")
 
