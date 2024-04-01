@@ -10,7 +10,7 @@ Product_id,Name,PriceReg,ItemCount,Category,Discount
 9,Brownies,53.95,37,Food,0
 10,Iphone 15,399.95,34,Electronic,0
 11,Iphone 14,42.95,23,Electronic,0.25
-12,Laptop i7,97.95,34,Electronic,0
+12,Laptop i9,97.95,34,Electronic,0
 13,Laptop i7,70.95,47,Electronic,0.25
 14,Ps5,50,14,Electronic,0.25
 15,Xbox,46.75,38,Electronic,0
