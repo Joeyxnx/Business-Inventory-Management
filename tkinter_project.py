@@ -7,17 +7,42 @@ inventory_data = {}  # Initialize an empty dictionary for inventory data
 
 
 def read_csv(filename):
-    with open(filename, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            item_id = int(row["Product_id"])
-            item_name = str(row['Name'])
-            quantity = int(row['ItemCount'])
-            price = float(row['PriceReg'])
-            category = str(row['Category'])
-            discount = float(row['Discount'])  # New: Read discount column
-            inventory_data[item_id] = {'item_name': item_name, "quantity": quantity, 'price': price,
-                                       'category': category, 'discount': discount}  # Update inventory_data
+    try:
+        with open(filename, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                item_id = int(row["Product_id"])
+                inventory_data[item_id] = {
+                    'item_name': row['Name'],
+                    "quantity": int(row['ItemCount']),
+                    'price': float(row['PriceReg']),
+                    'category': row['Category'],
+                    'missing_qty': int(row.get('MissingQty', 0))
+                    # Handle missing field for backward compatibility
+                }
+    except Exception as e:
+        messagebox.showerror("Error",
+                             f"Failed to read the file {filename}: {e}")
+
+def write_csv(filename, data):
+    try:
+        with open(filename, mode='w', newline='') as csvfile:
+            fieldnames = ['Product_id', 'Name', 'ItemCount', 'PriceReg',
+                          'Category', 'MissingQty']
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            writer.writeheader()
+            for item_id, details in data.items():
+                writer.writerow({
+                    'Product_id': item_id,
+                    'Name': details['item_name'],
+                    'ItemCount': details['quantity'],
+                    'PriceReg': details['price'],
+                    'Category': details['category'],
+                    'MissingQty': details.get('missing_qty', 0)
+                })
+    except Exception as e:
+        messagebox.showerror("Error",
+                             f"An error occurred while writing to {filename}: {e}")
 
 
 def open_inventory():
@@ -33,21 +58,23 @@ def open_inventory():
     file_menu.add_command(label="View Inventory", command=choose_view_inventory)
     file_menu.add_command(label="Add Item", command=add_item)
     file_menu.add_command(label="Remove Item", command=remove_item)
+    file_menu.add_command(label="Report Missing Item",
+                          command=report_missing_item)
     file_menu.add_separator()
     file_menu.add_command(label="Exit", command=root.quit)
-    view_inventory_button = tk.Button(root, text="View Current Inventory", command=choose_view_inventory)
+
+    view_inventory_button = tk.Button(root, text="View Current Inventory",
+                                      command=choose_view_inventory)
     view_inventory_button.pack()
-    add_item_button = tk.Button(root, text="Add Item to Inventory", command=add_item)
+    add_item_button = tk.Button(root, text="Add Item to Inventory",
+                                command=add_item)
     add_item_button.pack()
-    remove_item_button = tk.Button(root, text="Remove Item from Inventory", command=remove_item)
+    remove_item_button = tk.Button(root, text="Remove Item from Inventory",
+                                   command=remove_item)
     remove_item_button.pack()
-
-    # Add a button to plot sales data
-    plot_sales_button = tk.Button(root, text="Plot Sales Data", command=plot_sales)
-    plot_sales_button.pack()
-
-    plot_lifetime_sales_button = tk.Button(root, text="Plot Lifetime Sales Data", command=plot_lifetime_sales)
-    plot_lifetime_sales_button.pack()
+    report_missing_button = tk.Button(root, text="Report Missing Item",
+                                      command=report_missing_item)
+    report_missing_button.pack()
     root.mainloop()
 
 
@@ -63,12 +90,19 @@ def view_inventory_by_category():
     category_window = tk.Toplevel()
     category_window.title("View Inventory by Category")
 
-    food_button = tk.Button(category_window, text="Food", command=lambda: view_inventory_category("Food"))
+    food_button = tk.Button(category_window, text="Food",
+                            command=lambda: view_inventory_category(
+                                "Food"))  # Food Category
     food_button.pack()
     electronic_button = tk.Button(category_window, text="Electronic",
-                                  command=lambda: view_inventory_category("Electronic"))
+                                  command=lambda: view_inventory_category(
+                                      # Electronics Category
+                                      "Electronic"))
     electronic_button.pack()
-    clothing_button = tk.Button(category_window, text="Clothing", command=lambda: view_inventory_category("Clothing"))
+    clothing_button = tk.Button(category_window, text="Clothing",
+                                command=lambda: view_inventory_category(
+                                    # Clothing Category
+                                    "Clothing"))
     clothing_button.pack()
 
 
@@ -76,33 +110,27 @@ def view_inventory_category(category):
     inventory_window = tk.Toplevel()
     inventory_window.title(f"Current {category} Inventory")
 
-    # Create Treeview widget with centered content
-    tree = ttk.Treeview(inventory_window, columns=("Item ID", "Item Name", "Quantity", "Price", "Discount"),
-                        show="headings")
-    tree.heading("Item ID", text="Item ID")
-    tree.heading("Item Name", text="Item Name")
-    tree.heading("Quantity", text="Quantity")
-    tree.heading("Price", text="Price")
-    tree.heading("Discount", text="Discount")  # New: Display Discount column
-
-    # Configure Treeview style to center the content
-    for col in tree["columns"]:
+    tree = ttk.Treeview(inventory_window, columns=(
+    "Item ID", "Item Name", "Available Qty", "Missing Qty", "Price"),
+                        show="headings")  # Updated For Missing QTY / avlble
+    for col in (
+    "Item ID", "Item Name", "Available Qty", "Missing Qty", "Price"):
+        tree.heading(col, text=col)
         tree.column(col, anchor="center")
 
-    # Insert inventory data into Treeview for the selected category
     for item_id, details in inventory_data.items():
         if details["category"] == category:
+            available_quantity = details["quantity"] - details[
+                "missing_qty"]  # Takes qty - missing qty = avaiblle qty
             tree.insert("", "end", values=(
-            item_id, details["item_name"], details["quantity"], details["price"], details["discount"]),
-                        tags=("center",))
+                item_id, details["item_name"], available_quantity,
+                details["missing_qty"], details["price"]), tags=("center",))
 
-    tree.pack(expand=True, fill=tk.BOTH)  # Expand the Treeview to fill the window
-
-    # Add scrollbar to the Treeview
-    scrollbar = ttk.Scrollbar(inventory_window, orient="vertical", command=tree.yview)
+    tree.pack(expand=True, fill=tk.BOTH)
+    scrollbar = ttk.Scrollbar(inventory_window, orient="vertical",
+                              command=tree.yview)
     scrollbar.pack(side="right", fill="y")
     tree.configure(yscrollcommand=scrollbar.set)
-
     inventory_window.mainloop()
 
 
@@ -110,34 +138,28 @@ def view_inventory_all():
     inventory_window = tk.Toplevel()
     inventory_window.title("Current Inventory - All Categories")
 
-    # Create Treeview widget with centered content
-    tree = ttk.Treeview(inventory_window, columns=("Item ID", "Item Name", "Category", "Quantity", "Price", "Discount"),
-                        show="headings")
-    tree.heading("Item ID", text="Item ID")
-    tree.heading("Item Name", text="Item Name")
-    tree.heading("Category", text="Category")
-    tree.heading("Quantity", text="Quantity")
-    tree.heading("Price", text="Price")
-    tree.heading("Discount", text="Discount")  # New: Display Discount column
-
-    # Configure Treeview style to center the content
-    for col in tree["columns"]:
+    tree = ttk.Treeview(inventory_window, columns=(
+    "Item ID", "Item Name", "Category", "Available Qty", "Missing Qty",
+    "Price"), show="headings")
+    for col in (
+    "Item ID", "Item Name", "Category", "Available Qty", "Missing Qty",
+    "Price"):
+        tree.heading(col, text=col)
         tree.column(col, anchor="center")
 
-    # Insert all inventory data into Treeview
     for item_id, details in inventory_data.items():
-        tree.insert("", "end", values=(item_id, details["item_name"], details["category"], details["quantity"],
-                                       details["price"], details["discount"]), tags=("center",))
+        available_quantity = details["quantity"] - details["missing_qty"] #same math as above func
+        tree.insert("", "end", values=(
+            item_id, details["item_name"], details["category"],
+            available_quantity, details["missing_qty"], details["price"]),
+                    tags=("center",))
 
-    tree.pack(expand=True, fill=tk.BOTH)  # Expand the Treeview to fill the window
-
-    # Add scrollbar to the Treeview
-    scrollbar = ttk.Scrollbar(inventory_window, orient="vertical", command=tree.yview)
+    tree.pack(expand=True, fill=tk.BOTH)
+    scrollbar = ttk.Scrollbar(inventory_window, orient="vertical",
+                              command=tree.yview)
     scrollbar.pack(side="right", fill="y")
     tree.configure(yscrollcommand=scrollbar.set)
-
     inventory_window.mainloop()
-
 
 def add_item():
     item_name = simpledialog.askstring("Add Item", "Enter item name:")
@@ -266,7 +288,30 @@ def display_discounted_items():
         messagebox.showinfo("Discounted Items", f"The following items are on discount:\n{', '.join(discounted_items)}")
     else:
         messagebox.showinfo("Discounted Items", "No items are currently on discount.")
-        
+def refresh_inventory_views():
+    for window in open_inventory_windows:
+        window.refresh_view()  # would refresh content
+
+
+def report_missing_item():
+    item_name = simpledialog.askstring("Update Missing Quantity",
+                                       "Enter the name of the item:")
+    if not item_name:
+        return
+    for item_id, details in inventory_data.items():
+        if details["item_name"].lower() == item_name.lower():
+            new_missing_qty = simpledialog.askinteger("Missing Quantity",
+                                                      "Enter the missing quantity:",
+                                                      initialvalue=details.get(
+                                                          'missing_qty', 0))
+            if new_missing_qty is not None:
+                inventory_data[item_id]['missing_qty'] = new_missing_qty
+                write_csv(CSV_FILENAME, inventory_data)
+                messagebox.showinfo("Updated",
+                                    f"Missing quantity for '{item_name}' updated.")
+                refresh_inventory_views()  # Refresh view
+            return
+    messagebox.showerror("Not Found", "Item not found in inventory.")    
 # NEED TO IMPLEMENT REPORT MISSING METHOD 
 # NEED TO WORK ON INVALID INPUTS ON MOST FUNCTIONS 
 # NEED TO ADD EXPIRY DATE FOR FOOD CATEGORY (Month, Year) 
