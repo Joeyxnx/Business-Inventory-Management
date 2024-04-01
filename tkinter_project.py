@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 import csv
+import matplotlib.pyplot as plt
 
 inventory_data = {}  # Initialize an empty dictionary for inventory data
 
@@ -14,8 +15,9 @@ def read_csv(filename):
             quantity = int(row['ItemCount'])
             price = float(row['PriceReg'])
             category = str(row['Category'])
+            discount = float(row['Discount'])  # New: Read discount column
             inventory_data[item_id] = {'item_name': item_name, "quantity": quantity, 'price': price,
-                                       'category': category}
+                                       'category': category, 'discount': discount}  # Update inventory_data
 
 
 def open_inventory():
@@ -33,13 +35,19 @@ def open_inventory():
     file_menu.add_command(label="Remove Item", command=remove_item)
     file_menu.add_separator()
     file_menu.add_command(label="Exit", command=root.quit)
-
     view_inventory_button = tk.Button(root, text="View Current Inventory", command=choose_view_inventory)
     view_inventory_button.pack()
     add_item_button = tk.Button(root, text="Add Item to Inventory", command=add_item)
     add_item_button.pack()
     remove_item_button = tk.Button(root, text="Remove Item from Inventory", command=remove_item)
     remove_item_button.pack()
+
+    # Add a button to plot sales data
+    plot_sales_button = tk.Button(root, text="Plot Sales Data", command=plot_sales)
+    plot_sales_button.pack()
+
+    plot_lifetime_sales_button = tk.Button(root, text="Plot Lifetime Sales Data", command=plot_lifetime_sales)
+    plot_lifetime_sales_button.pack()
     root.mainloop()
 
 
@@ -69,11 +77,13 @@ def view_inventory_category(category):
     inventory_window.title(f"Current {category} Inventory")
 
     # Create Treeview widget with centered content
-    tree = ttk.Treeview(inventory_window, columns=("Item ID", "Item Name", "Quantity", "Price"), show="headings")
+    tree = ttk.Treeview(inventory_window, columns=("Item ID", "Item Name", "Quantity", "Price", "Discount"),
+                        show="headings")
     tree.heading("Item ID", text="Item ID")
     tree.heading("Item Name", text="Item Name")
     tree.heading("Quantity", text="Quantity")
     tree.heading("Price", text="Price")
+    tree.heading("Discount", text="Discount")  # New: Display Discount column
 
     # Configure Treeview style to center the content
     for col in tree["columns"]:
@@ -82,7 +92,8 @@ def view_inventory_category(category):
     # Insert inventory data into Treeview for the selected category
     for item_id, details in inventory_data.items():
         if details["category"] == category:
-            tree.insert("", "end", values=(item_id, details["item_name"], details["quantity"], details["price"]),
+            tree.insert("", "end", values=(
+            item_id, details["item_name"], details["quantity"], details["price"], details["discount"]),
                         tags=("center",))
 
     tree.pack(expand=True, fill=tk.BOTH)  # Expand the Treeview to fill the window
@@ -100,13 +111,14 @@ def view_inventory_all():
     inventory_window.title("Current Inventory - All Categories")
 
     # Create Treeview widget with centered content
-    tree = ttk.Treeview(inventory_window, columns=("Item ID", "Item Name", "Category", "Quantity", "Price"),
+    tree = ttk.Treeview(inventory_window, columns=("Item ID", "Item Name", "Category", "Quantity", "Price", "Discount"),
                         show="headings")
     tree.heading("Item ID", text="Item ID")
     tree.heading("Item Name", text="Item Name")
     tree.heading("Category", text="Category")
     tree.heading("Quantity", text="Quantity")
     tree.heading("Price", text="Price")
+    tree.heading("Discount", text="Discount")  # New: Display Discount column
 
     # Configure Treeview style to center the content
     for col in tree["columns"]:
@@ -115,7 +127,7 @@ def view_inventory_all():
     # Insert all inventory data into Treeview
     for item_id, details in inventory_data.items():
         tree.insert("", "end", values=(item_id, details["item_name"], details["category"], details["quantity"],
-                                       details["price"]), tags=("center",))
+                                       details["price"], details["discount"]), tags=("center",))
 
     tree.pack(expand=True, fill=tk.BOTH)  # Expand the Treeview to fill the window
 
@@ -172,7 +184,7 @@ def add_item():
                 writer.writerow([item_id, item_name, item_price, item_quantity, item_category])  # Write category to CSV
             messagebox.showinfo("Add Item", f"{item_name} added to inventory.")
 
-# THIS WORKS NOW!
+
 def remove_item():
     item_id = simpledialog.askinteger("Remove Item", "Enter item ID to remove:")
     if item_id in inventory_data:
@@ -197,14 +209,70 @@ def remove_item():
     else:
         messagebox.showerror("Remove Item", f"Item with ID {item_id} not found in inventory.")
 
-# NEED TO IMPLEMENT REPORT MISSING METHOD
-# NEED TO WORK ON INVALID INPUTS ON MOST FUNCTIONS
-# NEED TO IMPLEMENT DISCOUNT METHOD (Assume 25% for selected electronics)
-# NEED TO ADD EXPIRY DATE FOR FOOD CATEGORY (Month, Year)
+
+def plot_sales():
+    sales_2024 = []
+    sales_2023 = []
+
+    with open('SalesKaggle3_2.csv', newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if '2024_Sales' in row and '2023_Sales' in row:
+                sales_2024.append(float(row['2024_Sales']))
+                sales_2023.append(float(row['2023_Sales']))
+                
+    if not sales_2024 or not sales_2023:
+        messagebox.showwarning("Data Missing", "Sales data for 2024 or 2023 is missing.")
+        return
+        
+    fig, ax = plt.subplots()
+
+    ax.plot(sales_2024, label='2024 Sales')
+    ax.plot(sales_2023, label='2023 Sales')
+    ax.set_xlabel('Item ID')
+    ax.set_ylabel('Sales')
+    ax.set_title('Sales Comparison: 2024 vs 2023')
+    ax.legend()
+    plt.show()
+
+
+def plot_lifetime_sales():
+    lifetime_sales = []
+    with open('SalesKaggle3_2.csv', newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if 'Lifetime_Sales' in row:
+                lifetime_sales.append(float(row['Lifetime_Sales']))
+                
+    if not lifetime_sales:
+        messagebox.showwarning("Data Missing", "Lifetime sales data is missing.")
+        return
+
+    # Create a figure and axis
+    fig, ax = plt.subplots()
+
+    # Plot the data
+    ax.plot(lifetime_sales, label='Lifetime Sales')
+    ax.set_xlabel('Item ID')
+    ax.set_ylabel('Sales')
+    ax.set_title('Lifetime Sales')
+    ax.legend()
+    plt.show()
+
+
+def display_discounted_items():
+    discounted_items = [details["item_name"] for item_id, details in inventory_data.items() if details["discount"] > 0]
+    if discounted_items:
+        messagebox.showinfo("Discounted Items", f"The following items are on discount:\n{', '.join(discounted_items)}")
+    else:
+        messagebox.showinfo("Discounted Items", "No items are currently on discount.")
+        
+# NEED TO IMPLEMENT REPORT MISSING METHOD 
+# NEED TO WORK ON INVALID INPUTS ON MOST FUNCTIONS 
+# NEED TO ADD EXPIRY DATE FOR FOOD CATEGORY (Month, Year) 
 # NEED TO ADD SIZE AVAILABILITY FOR CLOTHES (XS,S,M,L,XL) 
-# MAYBE ALSO ADD SHOES SIZES FOR MEN AND WOMEN (ASSUME 6-10 FOR WOMEN, 8-12 FOR MEN)
-# NEED TO USE MATPLOTLIB AND PANDAS
+# MAYBE ALSO ADD SHOES SIZES FOR MEN AND WOMEN (ASSUME 6-10 FOR WOMEN, 8-12 FOR MEN) 
 
 
-read_csv('SalesKaggle3_2.csv')  # Read inventory data from CSV file
+read_csv('SalesKaggle3_2.csv')  
 open_inventory()
