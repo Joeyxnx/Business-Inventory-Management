@@ -1,26 +1,26 @@
-Product_id,Name,PriceReg,ItemCount
-1,Banana,104.99,15
-2,Apple,32.99,26
-3,Mango,129.95,22
-4,Nutella,64.95,12
-5,Rice,120.39,69
-6,Chips,126.2,33
-7,Popcorn,167.75,20
-8,Cookies,94.6,33
-9,Brownies,53.95,37
-10,Iphone 15,399.95,34
-11,Iphone 14,42.95,23
-12,Laptop i7,97.95,34
-13,Laptop i7,70.95,47
-14,Ps5,50,14
-15,Xbox,46.75,38
-16,Samsung S20,44.95,85
-17,Apple Watch,168.25,69
-18,Speaker,224.95,22
-19,Nike T-Shirt,77.95,39
-20,Adidas T-Shirt,74.95,20
-21,Nike Joggers,123.95,33
-22,Adidas Joggers,215.31,73
-23,Levi Jeans,106.67,23
-24,Polo Shirt,69.95,68
-25,Nike Shoes,65.25,30
+Product_id,Name,PriceReg,ItemCount,Category,Discount
+1,Banana,104.99,15,Food,0
+2,Apple,32.99,26,Food,0
+3,Mango,129.95,22,Food,0
+4,Nutella,64.95,12,Food,0
+5,Rice,120.39,69,Food,0
+6,Chips,126.2,33,Food,0
+7,Popcorn,167.75,20,Food,0
+8,Cookies,94.6,33,Food,0
+9,Brownies,53.95,37,Food,0
+10,Iphone 15,399.95,34,Electronic,0
+11,Iphone 14,42.95,23,Electronic0.25
+12,Laptop i7,97.95,34,Electronic,0
+13,Laptop i7,70.95,47,Electronic,0.25
+14,Ps5,50,14,Electronic,0.25
+15,Xbox,46.75,38,Electronic,0
+16,Samsung S20,44.95,85,Electronic,0
+17,Apple Watch,168.25,69,Electronic,0
+18,Speaker,224.95,22,Electronic,0.25
+19,Nike T-Shirt,77.95,39,Clothing,0
+20,Adidas T-Shirt,74.95,20,Clothing,0
+21,Nike Joggers,123.95,33,Clothing,0
+22,Adidas Joggers,215.31,73,Clothing,0
+23,Levi Jeans,106.67,23,Clothing,0
+24,Polo Shirt,69.95,68,Clothing,0
+25,Nike Shoes,65.25,30,Clothing,0
