@@ -2,8 +2,118 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 import csv
 import matplotlib.pyplot as plt
+import bcrypt
 
-inventory_data = {}  # Initialize an empty dictionary for inventory data
+inventory_data = {}
+
+
+def authenticate_user(username, password):
+    try:
+        with open('users.csv', newline='') as f:
+            reader = csv.reader(f)
+            for row in reader: # go through user and pass
+                stored_username, stored_hashed_pw = row
+                if stored_username == username: #authenticate
+                    return bcrypt.checkpw(password.encode('utf-8'),
+                                          stored_hashed_pw.encode('utf-8'))
+    except FileNotFoundError:
+        messagebox.showerror("Error", "User database not found.")
+    return False
+
+
+def login(master):
+    while True: # loop so u can retry
+        username = simpledialog.askstring("Login", "Enter your username:",
+                                          parent=master)
+        if not username:
+            return False
+
+        password = simpledialog.askstring("Login", "Enter your password:",
+                                          show="*", parent=master) #prompt for pass
+        if not password:  # Check if the dialog was cancelled
+            return False
+
+        if authenticate_user(username, password):
+            return True  # exit when authenticated
+        else:
+            # try again
+            try_again = messagebox.askretrycancel("Login Failed",
+                                                  "Incorrect username or password. Would you like to try again?")
+            if not try_again:
+                return False
+
+
+def main(root):
+    root.deiconify
+    root = tk.Tk()
+    root.withdraw()
+
+    choice = messagebox.askquestion("Start", "Do you have an account?",
+                                    icon='question')
+    if choice == 'yes':
+        if login(root):
+            root.deiconify()
+            open_inventory(root) #open if pass
+        else:
+            messagebox.showerror("Login Failed", "The login was unsuccessful.") # if fail
+            root.destroy()
+    elif choice == 'no': # user doesnt have an account
+        if create_user_gui(root):
+            messagebox.showinfo("Registration",
+                                "Please log in with your new credentials.")
+            if login(root):
+                root.deiconify()
+                open_inventory(root)
+            else:
+                messagebox.showerror("Login Failed",
+                                     "The login was unsuccessful.")
+                root.destroy()
+        else:
+            root.destroy()
+
+    root.mainloop()
+
+
+def create_user_gui(master):
+    new_username = simpledialog.askstring("Register", "Enter new username:",
+                                          parent=master)
+    if not new_username:
+        messagebox.showinfo("Registration", "Registration cancelled.")
+        return False
+
+    new_password = simpledialog.askstring("Register", "Enter new password:",
+                                          show="*", parent=master)
+    if not new_password:
+        messagebox.showinfo("Registration", "Registration cancelled.")
+        return False
+
+    confirm_password = simpledialog.askstring("Register", "Confirm password:",
+                                              show="*", parent=master)
+    if new_password != confirm_password:
+        messagebox.showerror("Error", "Passwords do not match.")
+        return False
+
+    hashed_pw = hash_password(new_password) #hash/encrypt da password
+    with open('users.csv', 'a', newline='') as f:
+        writer = csv.writer(f) #stores new user
+        writer.writerow([new_username, hashed_pw.decode('utf-8')])
+
+    messagebox.showinfo("Registration", "User registered successfully.")
+    return True
+
+
+def hash_password(password):
+    """Hash a password for storing."""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+
+def create_user(username, password):
+    """Store a new user with a hashed password."""
+    hashed_pw = hash_password(password)
+    # Append the new user to your user storage
+    with open('users.csv', 'a', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow([username, hashed_pw.decode('utf-8')])
 
 
 def read_csv(filename):
@@ -18,11 +128,11 @@ def read_csv(filename):
                     'price': float(row['PriceReg']),
                     'category': row['Category'],
                     'missing_qty': int(row.get('MissingQty', 0))
-                    # Handle missing field for backward compatibility
                 }
     except Exception as e:
         messagebox.showerror("Error",
                              f"Failed to read the file {filename}: {e}")
+
 
 def write_csv(filename, data):
     try:
@@ -45,15 +155,15 @@ def write_csv(filename, data):
                              f"An error occurred while writing to {filename}: {e}")
 
 
-def open_inventory():
+def open_inventory(master):
+    master.title("Inventory Management System")
+    menu_bar = tk.Menu(master)
+    master.config(menu=menu_bar)
     root = tk.Tk()
     root.title("Inventory Management System")
 
-    # Create Menu
     menu_bar = tk.Menu(root)
     root.config(menu=menu_bar)
-
-    # Add Menu Items
     file_menu = tk.Menu(menu_bar, tearoff=0)
     file_menu.add_command(label="View Inventory", command=choose_view_inventory)
     file_menu.add_command(label="Add Item", command=add_item)
@@ -79,7 +189,8 @@ def open_inventory():
 
 
 def choose_view_inventory():
-    choice = messagebox.askyesno("View Inventory", "Do you want to view inventory by categories?")
+    choice = messagebox.askyesno("View Inventory",
+                                 "Do you want to view inventory by categories?")
     if choice:
         view_inventory_by_category()
     else:
@@ -116,10 +227,10 @@ def view_inventory_category(category):
     inventory_window.title(f"Current {category} Inventory")
 
     tree = ttk.Treeview(inventory_window, columns=(
-    "Item ID", "Item Name", "Available Qty", "Missing Qty", "Price"),
+        "Item ID", "Item Name", "Available Qty", "Missing Qty", "Price"),
                         show="headings")  # Updated For Missing QTY / avlble
     for col in (
-    "Item ID", "Item Name", "Available Qty", "Missing Qty", "Price"):
+            "Item ID", "Item Name", "Available Qty", "Missing Qty", "Price"):
         tree.heading(col, text=col)
         tree.column(col, anchor="center")
 
@@ -144,16 +255,17 @@ def view_inventory_all():
     inventory_window.title("Current Inventory - All Categories")
 
     tree = ttk.Treeview(inventory_window, columns=(
-    "Item ID", "Item Name", "Category", "Available Qty", "Missing Qty",
-    "Price"), show="headings")
+        "Item ID", "Item Name", "Category", "Available Qty", "Missing Qty",
+        "Price"), show="headings")
     for col in (
-    "Item ID", "Item Name", "Category", "Available Qty", "Missing Qty",
-    "Price"):
+            "Item ID", "Item Name", "Category", "Available Qty", "Missing Qty",
+            "Price"):
         tree.heading(col, text=col)
         tree.column(col, anchor="center")
 
     for item_id, details in inventory_data.items():
-        available_quantity = details["quantity"] - details["missing_qty"] #same math as above func
+        available_quantity = details["quantity"] - details[
+            "missing_qty"]  # same math as above func
         tree.insert("", "end", values=(
             item_id, details["item_name"], details["category"],
             available_quantity, details["missing_qty"], details["price"]),
@@ -165,6 +277,7 @@ def view_inventory_all():
     scrollbar.pack(side="right", fill="y")
     tree.configure(yscrollcommand=scrollbar.set)
     inventory_window.mainloop()
+
 
 def add_item():
     item_name = simpledialog.askstring("Add Item", "Enter item name:")
@@ -179,36 +292,45 @@ def add_item():
                     inventory_data[item_id]["quantity"] += new_quantity
 
                     # Update the CSV file with the new quantity
-                    with open('SalesKaggle3_2.csv', mode='r', newline='') as csvfile:
+                    with open('SalesKaggle3_2.csv', mode='r',
+                              newline='') as csvfile:
                         reader = csv.reader(csvfile)
                         header = next(reader)  # Skip the header row
                         rows = [row for row in reader]
                         for row in rows:
                             if int(row[0]) == item_id:
-                                row[3] = inventory_data[item_id]["quantity"]  # Update quantity in CSV
+                                row[3] = inventory_data[item_id][
+                                    "quantity"]  # Update quantity in CSV
                                 break
 
                     # Rewrite the CSV file with updated quantity
-                    with open('SalesKaggle3_2.csv', mode='w', newline='') as csvfile:
+                    with open('SalesKaggle3_2.csv', mode='w',
+                              newline='') as csvfile:
                         writer = csv.writer(csvfile)
                         writer.writerow(header)  # Write the header row back
                         writer.writerows(rows)
 
-                    messagebox.showinfo("Update Quantity", f"Quantity updated for item '{item_name}'.")
+                    messagebox.showinfo("Update Quantity",
+                                        f"Quantity updated for item '{item_name}'.")
                     return  # Exit the function after updating quantity
 
         # Item doesn't exist, add it to inventory
         item_id = len(inventory_data) + 1  # Generate a new item ID
-        item_quantity = simpledialog.askinteger("Add Item", "Enter item quantity:")
+        item_quantity = simpledialog.askinteger("Add Item",
+                                                "Enter item quantity:")
         item_price = simpledialog.askfloat("Add Item", "Enter item price:")
-        item_category = simpledialog.askstring("Add Item", "Enter item category:")  # Ask for category
+        item_category = simpledialog.askstring("Add Item",
+                                               "Enter item category:")  # Ask for category
         if item_quantity is not None and item_price is not None and item_category:
-            inventory_data[item_id] = {"item_name": item_name, "quantity": item_quantity, "price": item_price,
+            inventory_data[item_id] = {"item_name": item_name,
+                                       "quantity": item_quantity,
+                                       "price": item_price,
                                        "category": item_category}
             # Append the new item to the CSV file
             with open('SalesKaggle3_2.csv', mode='a', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow([item_id, item_name, item_price, item_quantity, item_category])  # Write category to CSV
+                writer.writerow([item_id, item_name, item_price, item_quantity,
+                                 item_category])  # Write category to CSV
             messagebox.showinfo("Add Item", f"{item_name} added to inventory.")
 
 
@@ -221,7 +343,8 @@ def remove_item():
         with open('SalesKaggle3_2.csv', mode='r', newline='') as csvfile:
             reader = csv.reader(csvfile)
             header = next(reader)  # Skip the header row
-            rows = [row for row in reader if int(row[0]) != item_id]  # Remove item from CSV data
+            rows = [row for row in reader if
+                    int(row[0]) != item_id]  # Remove item from CSV data
 
         # Rewrite the CSV file without the removed item
         with open('SalesKaggle3_2.csv', mode='w', newline='') as csvfile:
@@ -232,9 +355,11 @@ def remove_item():
         # Update inventory_data dictionary by reading the CSV again
         read_csv('SalesKaggle3_2.csv')
 
-        messagebox.showinfo("Remove Item", f"Item with ID {item_id} removed from inventory.")
+        messagebox.showinfo("Remove Item",
+                            f"Item with ID {item_id} removed from inventory.")
     else:
-        messagebox.showerror("Remove Item", f"Item with ID {item_id} not found in inventory.")
+        messagebox.showerror("Remove Item",
+                             f"Item with ID {item_id} not found in inventory.")
 
 
 def plot_sales():
@@ -247,11 +372,12 @@ def plot_sales():
             if '2024_Sales' in row and '2023_Sales' in row:
                 sales_2024.append(float(row['2024_Sales']))
                 sales_2023.append(float(row['2023_Sales']))
-                
+
     if not sales_2024 or not sales_2023:
-        messagebox.showwarning("Data Missing", "Sales data for 2024 or 2023 is missing.")
+        messagebox.showwarning("Data Missing",
+                               "Sales data for 2024 or 2023 is missing.")
         return
-        
+
     fig, ax = plt.subplots()
 
     ax.plot(sales_2024, label='2024 Sales')
@@ -270,9 +396,10 @@ def plot_lifetime_sales():
         for row in reader:
             if 'Lifetime_Sales' in row:
                 lifetime_sales.append(float(row['Lifetime_Sales']))
-                
+
     if not lifetime_sales:
-        messagebox.showwarning("Data Missing", "Lifetime sales data is missing.")
+        messagebox.showwarning("Data Missing",
+                               "Lifetime sales data is missing.")
         return
 
     # Create a figure and axis
@@ -288,15 +415,20 @@ def plot_lifetime_sales():
 
 
 def display_discounted_items():
-    discounted_items = [details["item_name"] for item_id, details in inventory_data.items() if details["discount"] > 0]
+    discounted_items = [details["item_name"] for item_id, details in
+                        inventory_data.items() if details["discount"] > 0]
     if discounted_items:
-        messagebox.showinfo("Discounted Items", f"The following items are on discount:\n{', '.join(discounted_items)}")
+        messagebox.showinfo("Discounted Items",
+                            f"The following items are on discount:\n{', '.join(discounted_items)}")
     else:
-        messagebox.showinfo("Discounted Items", "No items are currently on discount.")
+        messagebox.showinfo("Discounted Items",
+                            "No items are currently on discount.")
+
 
 def refresh_inventory_views():
     for window in open_inventory_windows:
         window.refresh_view()  # would refresh content
+
 
 # NEED TO IMPLEMENT REPORT MISSING METHOD (Further implementations?)
 def report_missing_item():
@@ -312,12 +444,12 @@ def report_missing_item():
                                                           'missing_qty', 0))
             if new_missing_qty is not None:
                 inventory_data[item_id]['missing_qty'] = new_missing_qty
-                write_csv(CSV_FILENAME, inventory_data)
+                write_csv('SalesKaggle3_2.csv', inventory_data)
                 messagebox.showinfo("Updated",
                                     f"Missing quantity for '{item_name}' updated.")
-                refresh_inventory_views()  # Refresh view
+                refresh_inventory_views()  # refresh
             return
-    messagebox.showerror("Not Found", "Item not found in inventory.")    
+    messagebox.showerror("Not Found", "Item not found in inventory.")
 
 
 def invalid_input(input_val: any) -> str:
@@ -377,5 +509,8 @@ def shoe_size(us_size: float, eu_size: float) -> str:
     return 'Other'
 
 
-read_csv('SalesKaggle3_2.csv')  
-open_inventory()
+read_csv('SalesKaggle3_2.csv')
+if __name__ == "__main__":
+    root = tk.Tk()
+    root.withdraw()
+    main(root)
