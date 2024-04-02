@@ -1,0 +1,26 @@
+Product_id,Name,PriceReg,ItemCount,Category,Discount,2024_Sales,2023_Sales,Lifetime_Sales
+1,Banana,104.99,16,Food,0,16,78,94
+2,Apple,32.99,26,Food,0,50,74,124
+3,Mango,129.95,22,Food,0,34,75,109
+4,Nutella,64.95,12,Food,0,14,85,99
+5,Rice,120.39,69,Food,0,29,13,42
+6,Chips,126.2,33,Food,0,21,71,92
+7,Popcorn,167.75,20,Food,0,32,18,50
+8,Cookies,94.6,33,Food,0,29,76,105
+9,Brownies,53.95,37,Food,0,45,20,65
+10,Iphone 15,399.95,34,Electronic,0,51,96,147
+11,Iphone 14,42.95,23,Electronic,0.25,37,100,137
+12,Laptop i9,97.95,34,Electronic,0,94,28,122
+13,Laptop i7,70.95,47,Electronic,0.25,87,71,158
+14,Ps5,50,14,Electronic,0.25,43,70,113
+15,Xbox,46.75,38,Electronic,0,26,92,118
+16,Samsung S20,44.95,85,Electronic,0,64,60,124
+17,Apple Watch,168.25,69,Electronic,0,59,33,92
+18,Speaker,224.95,22,Electronic,0.25,22,84,106
+19,Nike T-Shirt,77.95,39,Clothing,0,16,68,84
+20,Adidas T-Shirt,74.95,20,Clothing,0,45,36,81
+21,Nike Joggers,123.95,33,Clothing,0,57,34,91
+22,Adidas Joggers,215.31,73,Clothing,0,16,52,68
+23,Levi Jeans,106.67,23,Clothing,0,23,62,85
+24,Polo Shirt,69.95,68,Clothing,0,89,15,104
+25,Nike Shoes,65.25,30,Clothing,0,61,34,95
