@@ -104,6 +104,11 @@ def view_inventory_by_category():
                                     # Clothing Category
                                     "Clothing"))
     clothing_button.pack()
+    shoe_button = tk.Button(category_window, text="Footwear",
+                            command=lambda: view_inventory_category(
+                                # Shoe Category
+                                "Footwear Category"))
+    shoe_button.pack()
 
 
 def view_inventory_category(category):
@@ -288,11 +293,12 @@ def display_discounted_items():
         messagebox.showinfo("Discounted Items", f"The following items are on discount:\n{', '.join(discounted_items)}")
     else:
         messagebox.showinfo("Discounted Items", "No items are currently on discount.")
+
 def refresh_inventory_views():
     for window in open_inventory_windows:
         window.refresh_view()  # would refresh content
 
-
+# NEED TO IMPLEMENT REPORT MISSING METHOD (Further implementations?)
 def report_missing_item():
     item_name = simpledialog.askstring("Update Missing Quantity",
                                        "Enter the name of the item:")
@@ -312,11 +318,63 @@ def report_missing_item():
                 refresh_inventory_views()  # Refresh view
             return
     messagebox.showerror("Not Found", "Item not found in inventory.")    
-# NEED TO IMPLEMENT REPORT MISSING METHOD 
-# NEED TO WORK ON INVALID INPUTS ON MOST FUNCTIONS 
-# NEED TO ADD EXPIRY DATE FOR FOOD CATEGORY (Month, Year) 
-# NEED TO ADD SIZE AVAILABILITY FOR CLOTHES (XS,S,M,L,XL) 
-# MAYBE ALSO ADD SHOES SIZES FOR MEN AND WOMEN (ASSUME 6-10 FOR WOMEN, 8-12 FOR MEN) 
+
+
+def invalid_input(input_val: any) -> str:
+    """
+    Checks if the input value is valid or not.
+    Returns True if the input is invalid, False otherwise.
+    """
+    if input_val is None:
+        return "Please input data"
+    if isinstance(input_val, str) and not input_val.strip():
+        # Check for empty strings after whitespace stripping
+        return "Please type again"
+    if isinstance(input_val, (int, float)) and input_val < 0:
+        # Check for negative numbers to deem invalid
+        return "Invalid negative input"
+    return "Try again"
+
+
+def expiry_date(month: int, year: int) -> tuple:
+    """
+    Returns the expiry date as a tuple of (month, year) for [food] category items.
+    Validate month and year to ensure the date is valid
+    """
+    if not 1 <= month <= 12:
+        raise ValueError("Month must be between 1 and 12.")
+    if year < 2020:  # Assume the inventory system started after 2020
+        raise ValueError("Year must be greater than 2020.")
+    return month, year
+
+
+def size_exist(XS: str, S: str, M: str, L: str, XL: str) -> str:
+    """
+    Check if sizes XS, S, M, L, and XL are available for [clothing] items.
+    Returns True if any of the sizes are available, False otherwise.
+    """
+    # Example: Check if at least one size is available
+    if XS or S or M or L or XL:
+        return "Available"
+    return "Not Available"
+
+
+def shoe_size(us_size: float, eu_size: float) -> str:
+    """
+    Determines the shoe size category based on US and Euro sizing.
+    Returns the category of shoe size (e.g., 'Small', 'Medium', 'Large').
+    """
+    if not us_size or not eu_size:
+        return 'Invalid size'
+
+    if 8 <= us_size <= 12 or 41 <= eu_size <= 45:
+        return 'Medium'
+    elif us_size < 8 or eu_size < 41:
+        return 'Small'
+    elif us_size > 12 or eu_size > 45:
+        return 'Large'
+
+    return 'Other'
 
 
 read_csv('SalesKaggle3_2.csv')  
