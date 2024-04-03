@@ -117,221 +117,156 @@ def create_user(username, password):
 
 
 def read_csv(filename):
-    try:
-        with open(filename, newline='') as csvfile:
-            reader = csv.DictReader(csvfile)
-            for row in reader:
-                item_id = int(row["Product_id"])
-                inventory_data[item_id] = {
-                    'item_name': row['Name'],
-                    "quantity": int(row['ItemCount']),
-                    'price': float(row['PriceReg']),
-                    'category': row['Category'],
-                    'missing_qty': int(row.get('MissingQty', 0))
-                }
-    except Exception as e:
-        messagebox.showerror("Error",
-                             f"Failed to read the file {filename}: {e}")
+    with open(filename, newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            item_id = int(row["Product_id"])
+            item_name = str(row['Name'])
+            quantity = int(row['ItemCount'])
+            price = float(row['PriceReg'])
+            category = str(row['Category'])
+            inventory_data[item_id] = {'item_name': item_name, "quantity": quantity, 'price': price,
+                                       'category': category}
 
 
-def write_csv(filename, data):
-    try:
-        with open(filename, mode='w', newline='') as csvfile:
-            fieldnames = ['Product_id', 'Name', 'ItemCount', 'PriceReg',
-                          'Category', 'MissingQty']
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writeheader()
-            for item_id, details in data.items():
-                writer.writerow({
-                    'Product_id': item_id,
-                    'Name': details['item_name'],
-                    'ItemCount': details['quantity'],
-                    'PriceReg': details['price'],
-                    'Category': details['category'],
-                    'MissingQty': details.get('missing_qty', 0)
-                })
-    except Exception as e:
-        messagebox.showerror("Error",
-                             f"An error occurred while writing to {filename}: {e}")
-
-
-def open_inventory(master):
-    master.title("Inventory Management System")
-    menu_bar = tk.Menu(master)
-    master.config(menu=menu_bar)
+# Function to open the inventory management system GUI
+def open_inventory():
     root = tk.Tk()
     root.title("Inventory Management System")
 
+    # Create a modern theme
+    style = ttk.Style()
+    style.theme_use('clam')  # Use 'clam' theme for a modern look
+    style.configure('TButton', font=('Helvetica', 12), padding=10, background='#3498db', foreground='black')
+    style.configure('TLabel', font=('Helvetica', 12), padding=5)
+    style.configure('Treeview', font=('Helvetica', 10), padding=10)
+
+    # Create Menu
     menu_bar = tk.Menu(root)
     root.config(menu=menu_bar)
+
+    # Add Menu Items
     file_menu = tk.Menu(menu_bar, tearoff=0)
-    file_menu.add_command(label="View Inventory", command=choose_view_inventory)
-    file_menu.add_command(label="Add Item", command=add_item)
-    file_menu.add_command(label="Remove Item", command=remove_item)
-    file_menu.add_command(label="Report Missing Item",
-                          command=report_missing_item)
-    file_menu.add_separator()
     file_menu.add_command(label="Exit", command=root.quit)
+    menu_bar.add_cascade(label="File", menu=file_menu)
 
-    view_inventory_button = tk.Button(root, text="View Current Inventory",
-                                      command=choose_view_inventory)
-    view_inventory_button.pack()
-    add_item_button = tk.Button(root, text="Add Item to Inventory",
-                                command=add_item)
-    add_item_button.pack()
-    remove_item_button = tk.Button(root, text="Remove Item from Inventory",
-                                   command=remove_item)
-    remove_item_button.pack()
-    report_missing_button = tk.Button(root, text="Report Missing Item",
-                                      command=report_missing_item)
-    report_missing_button.pack()
+    # Create Left Frame for View, Add, Remove buttons
+    left_frame = tk.Frame(root)
+    left_frame.pack(side="left", padx=20, pady=20)
+
+    view_inventory_button = ttk.Button(left_frame, text="View Inventory", command=view_inventory_all)
+    view_inventory_button.pack(fill=tk.BOTH, padx=10, pady=10)
+    add_item_button = ttk.Button(left_frame, text="Add Item", command=add_item)
+    add_item_button.pack(fill=tk.BOTH, padx=10, pady=10)
+    remove_item_button = ttk.Button(left_frame, text="Remove Item", command=remove_item)
+    remove_item_button.pack(fill=tk.BOTH, padx=10, pady=10)
+
+    # Create Right Frame for other buttons
+    right_frame = tk.Frame(root)
+    right_frame.pack(side="right", padx=20, pady=20)
+
+    plot_sales_button = ttk.Button(right_frame, text="2022/2023 Sales Data", command=plot_sales)
+    plot_sales_button.pack(fill=tk.BOTH, padx=10, pady=10)
+
+    plot_new_sales_button = ttk.Button(right_frame, text="2024 Sales Data", command=plot_new_sales)
+    plot_new_sales_button.pack(fill=tk.BOTH, padx=10, pady=10)
+
+    missing_items_button = ttk.Button(left_frame, text="Report Missing Items", command=report_missing_items)
+    missing_items_button.pack(fill=tk.BOTH, padx=10, pady=10)
+
+    # Add a button for selling items in your GUI
+    sell_item_button = ttk.Button(right_frame, text="Sell Item", command=sell_item)
+    sell_item_button.pack(fill=tk.BOTH, padx=10, pady=10)
+
     root.mainloop()
-
-
-def choose_view_inventory():
-    choice = messagebox.askyesno("View Inventory",
-                                 "Do you want to view inventory by categories?")
-    if choice:
-        view_inventory_by_category()
-    else:
-        view_inventory_all()
-
-
-def view_inventory_by_category():
-    category_window = tk.Toplevel()
-    category_window.title("View Inventory by Category")
-
-    food_button = tk.Button(category_window, text="Food",
-                            command=lambda: view_inventory_category(
-                                "Food"))  # Food Category
-    food_button.pack()
-    electronic_button = tk.Button(category_window, text="Electronic",
-                                  command=lambda: view_inventory_category(
-                                      # Electronics Category
-                                      "Electronic"))
-    electronic_button.pack()
-    clothing_button = tk.Button(category_window, text="Clothing",
-                                command=lambda: view_inventory_category(
-                                    # Clothing Category
-                                    "Clothing"))
-    clothing_button.pack()
-    shoe_button = tk.Button(category_window, text="Footwear",
-                            command=lambda: view_inventory_category(
-                                # Shoe Category
-                                "Footwear Category"))
-    shoe_button.pack()
-
-
-def view_inventory_category(category):
-    inventory_window = tk.Toplevel()
-    inventory_window.title(f"Current {category} Inventory")
-
-    tree = ttk.Treeview(inventory_window, columns=(
-        "Item ID", "Item Name", "Available Qty", "Missing Qty", "Price"),
-                        show="headings")  # Updated For Missing QTY / avlble
-    for col in (
-            "Item ID", "Item Name", "Available Qty", "Missing Qty", "Price"):
-        tree.heading(col, text=col)
-        tree.column(col, anchor="center")
-
-    for item_id, details in inventory_data.items():
-        if details["category"] == category:
-            available_quantity = details["quantity"] - details[
-                "missing_qty"]  # Takes qty - missing qty = avaiblle qty
-            tree.insert("", "end", values=(
-                item_id, details["item_name"], available_quantity,
-                details["missing_qty"], details["price"]), tags=("center",))
-
-    tree.pack(expand=True, fill=tk.BOTH)
-    scrollbar = ttk.Scrollbar(inventory_window, orient="vertical",
-                              command=tree.yview)
-    scrollbar.pack(side="right", fill="y")
-    tree.configure(yscrollcommand=scrollbar.set)
-    inventory_window.mainloop()
 
 
 def view_inventory_all():
     inventory_window = tk.Toplevel()
     inventory_window.title("Current Inventory - All Categories")
 
-    tree = ttk.Treeview(inventory_window, columns=(
-        "Item ID", "Item Name", "Category", "Available Qty", "Missing Qty",
-        "Price"), show="headings")
-    for col in (
-            "Item ID", "Item Name", "Category", "Available Qty", "Missing Qty",
-            "Price"):
-        tree.heading(col, text=col)
+    # Create Treeview widget with centered content
+    tree = ttk.Treeview(inventory_window, columns=("Item ID", "Item Name", "Category", "Quantity", "Price"),
+                        show="headings")
+    tree.heading("Item ID", text="Item ID")
+    tree.heading("Item Name", text="Item Name")
+    tree.heading("Category", text="Category")
+    tree.heading("Quantity", text="Quantity")
+    tree.heading("Price", text="Price")
+
+    # Configure Treeview style to center the content
+    for col in tree["columns"]:
         tree.column(col, anchor="center")
 
+    # Insert all inventory data into Treeview
     for item_id, details in inventory_data.items():
-        available_quantity = details["quantity"] - details[
-            "missing_qty"]  # same math as above func
-        tree.insert("", "end", values=(
-            item_id, details["item_name"], details["category"],
-            available_quantity, details["missing_qty"], details["price"]),
-                    tags=("center",))
+        row_values = (item_id, details["item_name"], details["category"], details["quantity"],
+                      details["price"])
 
-    tree.pack(expand=True, fill=tk.BOTH)
-    scrollbar = ttk.Scrollbar(inventory_window, orient="vertical",
-                              command=tree.yview)
+        tree.insert("", "end", values=row_values)
+
+    tree.pack(expand=True, fill=tk.BOTH)  # Expand the Treeview to fill the window
+
+    # Define style for highlighting rows
+    tree.tag_configure("highlight", background="yellow")
+
+    # Add scrollbar to the Treeview
+    scrollbar = ttk.Scrollbar(inventory_window, orient="vertical", command=tree.yview)
     scrollbar.pack(side="right", fill="y")
     tree.configure(yscrollcommand=scrollbar.set)
+
     inventory_window.mainloop()
 
 
 def add_item():
     item_name = simpledialog.askstring("Add Item", "Enter item name:")
     if item_name:
+        item_name_upper = item_name.upper()  # Convert item name to uppercase for case-insensitive comparison
         # Check if the item name already exists
         for item_id, details in inventory_data.items():
-            if details["item_name"] == item_name:
+            if details["item_name"].upper() == item_name_upper:
                 # Item already exists, update the quantity
                 new_quantity = simpledialog.askinteger("Update Quantity",
                                                        "Item exists in DB. Enter additional quantity:")
                 if new_quantity is not None:
                     inventory_data[item_id]["quantity"] += new_quantity
-
-                    # Update the CSV file with the new quantity
-                    with open('SalesKaggle3_2.csv', mode='r',
-                              newline='') as csvfile:
-                        reader = csv.reader(csvfile)
-                        header = next(reader)  # Skip the header row
-                        rows = [row for row in reader]
-                        for row in rows:
-                            if int(row[0]) == item_id:
-                                row[3] = inventory_data[item_id][
-                                    "quantity"]  # Update quantity in CSV
-                                break
-
-                    # Rewrite the CSV file with updated quantity
-                    with open('SalesKaggle3_2.csv', mode='w',
-                              newline='') as csvfile:
-                        writer = csv.writer(csvfile)
-                        writer.writerow(header)  # Write the header row back
-                        writer.writerows(rows)
-
-                    messagebox.showinfo("Update Quantity",
-                                        f"Quantity updated for item '{item_name}'.")
+                    inventory_data[item_id].setdefault("MissingQty", 0)  # Initialize MissingQty if not present
+                    inventory_data[item_id].setdefault("2024_Sales", 0)  # Initialize 2024_Sales if not present
+                    # Update the CSV file with the new quantity and retain 2024_Sales
+                    update_csv(item_id, inventory_data[item_id]["quantity"], inventory_data[item_id]["2024_Sales"])
+                    messagebox.showinfo("Update Quantity", f"Quantity updated for item '{item_name}'.")
                     return  # Exit the function after updating quantity
-
-        # Item doesn't exist, add it to inventory
+        # Item doesn't exist, add it to inventory with MissingQty and 2024_Sales initialized
         item_id = len(inventory_data) + 1  # Generate a new item ID
-        item_quantity = simpledialog.askinteger("Add Item",
-                                                "Enter item quantity:")
+        item_quantity = simpledialog.askinteger("Add Item", "Enter item quantity:")
         item_price = simpledialog.askfloat("Add Item", "Enter item price:")
-        item_category = simpledialog.askstring("Add Item",
-                                               "Enter item category:")  # Ask for category
+        item_category = simpledialog.askstring("Add Item", "Enter item category:")  # Ask for category
         if item_quantity is not None and item_price is not None and item_category:
-            inventory_data[item_id] = {"item_name": item_name,
-                                       "quantity": item_quantity,
-                                       "price": item_price,
-                                       "category": item_category}
-            # Append the new item to the CSV file
-            with open('SalesKaggle3_2.csv', mode='a', newline='') as csvfile:
+            inventory_data[item_id] = {"item_name": item_name, "quantity": item_quantity, "price": item_price,
+                                       "category": item_category, "MissingQty": 0, "2024_Sales": 0}  # Initialize MissingQty and 2024_Sales here
+            # Append the new item to the CSV file with MissingQty and 2024_Sales set to 0
+            with open('SalesKaggle3new.csv', mode='a', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow([item_id, item_name, item_price, item_quantity,
-                                 item_category])  # Write category to CSV
+                writer.writerow([item_id, item_name, item_price, item_quantity, item_category, 0, 0])  # Write 0 for MissingQty and 2024_Sales
             messagebox.showinfo("Add Item", f"{item_name} added to inventory.")
+
+
+def update_csv(item_id, quantity, curr_sold_2024):
+    with open('SalesKaggle3new.csv', mode='r', newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        header = next(reader)  # Skip the header row
+        rows = [row for row in reader]
+        for row in rows:
+            if int(row[0]) == item_id:
+                row[3] = quantity  # Update quantity in CSV
+                row[-1] = curr_sold_2024  # Update Curr_Sold in CSV
+                break
+
+    # Rewrite the CSV file with updated quantity and Curr_Sold
+    with open('SalesKaggle3new.csv', mode='w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(header)  # Write the header row back
+        writer.writerows(rows)
 
 
 def remove_item():
@@ -340,176 +275,141 @@ def remove_item():
         del inventory_data[item_id]
 
         # Read the CSV data and remove the item
-        with open('SalesKaggle3_2.csv', mode='r', newline='') as csvfile:
+        with open('SalesKaggle3new.csv', mode='r', newline='') as csvfile:
             reader = csv.reader(csvfile)
             header = next(reader)  # Skip the header row
-            rows = [row for row in reader if
-                    int(row[0]) != item_id]  # Remove item from CSV data
+            rows = [row for row in reader if int(row[0]) != item_id]  # Remove item from CSV data
 
         # Rewrite the CSV file without the removed item
-        with open('SalesKaggle3_2.csv', mode='w', newline='') as csvfile:
+        with open('SalesKaggle3new.csv', mode='w', newline='') as csvfile:
             writer = csv.writer(csvfile)
             writer.writerow(header)  # Write the header row back
             writer.writerows(rows)
 
         # Update inventory_data dictionary by reading the CSV again
-        read_csv('SalesKaggle3_2.csv')
+        read_csv('SalesKaggle3new.csv')
 
-        messagebox.showinfo("Remove Item",
-                            f"Item with ID {item_id} removed from inventory.")
+        messagebox.showinfo("Remove Item", f"Item with ID {item_id} removed from inventory.")
     else:
-        messagebox.showerror("Remove Item",
-                             f"Item with ID {item_id} not found in inventory.")
+        messagebox.showerror("Remove Item", f"Item with ID {item_id} not found in inventory.")
 
 
 def plot_sales():
-    sales_2024 = []
+    # Initialize empty lists for sales data
+    sales_2022 = []
     sales_2023 = []
 
-    with open('SalesKaggle3_2.csv', newline='') as csvfile:
+    # Read the CSV file to get the latest sales data
+    with open('SalesKaggle3new.csv', newline='') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
-            if '2024_Sales' in row and '2023_Sales' in row:
-                sales_2024.append(float(row['2024_Sales']))
+            if '2022_Sales' in row and '2023_Sales' in row:
+                sales_2022.append(float(row['2022_Sales']))
                 sales_2023.append(float(row['2023_Sales']))
 
-    if not sales_2024 or not sales_2023:
-        messagebox.showwarning("Data Missing",
-                               "Sales data for 2024 or 2023 is missing.")
-        return
-
-    fig, ax = plt.subplots()
-
-    ax.plot(sales_2024, label='2024 Sales')
-    ax.plot(sales_2023, label='2023 Sales')
-    ax.set_xlabel('Item ID')
-    ax.set_ylabel('Sales')
-    ax.set_title('Sales Comparison: 2024 vs 2023')
-    ax.legend()
-    plt.show()
-
-
-def plot_lifetime_sales():
-    lifetime_sales = []
-    with open('SalesKaggle3_2.csv', newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            if 'Lifetime_Sales' in row:
-                lifetime_sales.append(float(row['Lifetime_Sales']))
-
-    if not lifetime_sales:
-        messagebox.showwarning("Data Missing",
-                               "Lifetime sales data is missing.")
+    # Check if there is data to plot
+    if not sales_2022 or not sales_2023:
+        messagebox.showwarning("Data Missing", "Sales data for 2022 or 2023 is missing.")
         return
 
     # Create a figure and axis
     fig, ax = plt.subplots()
 
-    # Plot the data
-    ax.plot(lifetime_sales, label='Lifetime Sales')
+    ax.plot(sales_2022, label='2022 Sales')
+    ax.plot(sales_2023, label='2023 Sales')
     ax.set_xlabel('Item ID')
     ax.set_ylabel('Sales')
-    ax.set_title('Lifetime Sales')
+    ax.set_title('Sales Comparison: 2022 vs 2023')
     ax.legend()
     plt.show()
 
 
-def display_discounted_items():
-    discounted_items = [details["item_name"] for item_id, details in
-                        inventory_data.items() if details["discount"] > 0]
-    if discounted_items:
-        messagebox.showinfo("Discounted Items",
-                            f"The following items are on discount:\n{', '.join(discounted_items)}")
-    else:
-        messagebox.showinfo("Discounted Items",
-                            "No items are currently on discount.")
+def plot_new_sales():
+    # Initialize empty lists for item IDs and sales data
+    item_ids = []
+    sales_2024 = []
 
+    # Read the CSV file to get the latest sales data
+    with open('SalesKaggle3new.csv', newline='') as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            if '2024_Sales':
+                item_id = int(row['Product_id'])
+                item_ids.append(item_id)
+                sales_2024.append(float(row['2024_Sales']))
 
-def refresh_inventory_views():
-    for window in open_inventory_windows:
-        window.refresh_view()  # would refresh content
+    # https://stackoverflow.com/questions/55061846/how-to-zip-items-in-2-lists-only-when-a-condition-is-met-python
+    # Got this code from StackOverflow
+    item_ids_filtered = [item_id for item_id, sales in zip(item_ids, sales_2024) if sales != 0]
+    sales_2024_filtered = [sales for sales in sales_2024 if sales != 0]
 
-
-# NEED TO IMPLEMENT REPORT MISSING METHOD (Further implementations?)
-def report_missing_item():
-    item_name = simpledialog.askstring("Update Missing Quantity",
-                                       "Enter the name of the item:")
-    if not item_name:
+    # Check if there is data to plot after filtering
+    if not sales_2024_filtered:
+        messagebox.showwarning("Data Missing", "Filtered sales data for 2024 is empty.")
         return
-    for item_id, details in inventory_data.items():
-        if details["item_name"].lower() == item_name.lower():
-            new_missing_qty = simpledialog.askinteger("Missing Quantity",
-                                                      "Enter the missing quantity:",
-                                                      initialvalue=details.get(
-                                                          'missing_qty', 0))
-            if new_missing_qty is not None:
-                inventory_data[item_id]['missing_qty'] = new_missing_qty
-                write_csv('SalesKaggle3_2.csv', inventory_data)
-                messagebox.showinfo("Updated",
-                                    f"Missing quantity for '{item_name}' updated.")
-                refresh_inventory_views()  # refresh
-            return
-    messagebox.showerror("Not Found", "Item not found in inventory.")
+
+    # Create a figure and axis
+    fig, ax = plt.subplots()
+
+    # Plot a dot for each item's sales (filtered)
+    ax.plot(item_ids_filtered, sales_2024_filtered, marker='o', linestyle='', markersize=8, label='2024 Sales',
+            color='blue')
+
+    ax.set_xlabel('Item ID')
+    ax.set_ylabel('Sales')
+    ax.set_title('2024 Sales Data (Dot Plot)')
+    ax.legend()
+    plt.show()
 
 
-def invalid_input(input_val: any) -> str:
-    """
-    Checks if the input value is valid or not.
-    Returns True if the input is invalid, False otherwise.
-    """
-    if input_val is None:
-        return "Please input data"
-    if isinstance(input_val, str) and not input_val.strip():
-        # Check for empty strings after whitespace stripping
-        return "Please type again"
-    if isinstance(input_val, (int, float)) and input_val < 0:
-        # Check for negative numbers to deem invalid
-        return "Invalid negative input"
-    return "Try again"
+def report_missing_items():
+    item_id = simpledialog.askinteger("Report Missing Items", "Enter item ID for the missing item:")
+    if item_id in inventory_data:
+        missing_quantity = simpledialog.askinteger("Report Missing Items", "Enter the missing quantity:")
+        if missing_quantity is not None and missing_quantity > 0:
+            inventory_data[item_id].setdefault("MissingQty", 0)  # Initialize MissingQty if not present
+            inventory_data[item_id]["quantity"] -= missing_quantity
+            inventory_data[item_id]["MissingQty"] += missing_quantity
+
+            # Update the CSV file with the missing quantity
+            update_csv(item_id, inventory_data[item_id]["quantity"], inventory_data[item_id]["MissingQty"])
+
+            messagebox.showinfo("Report Missing Items", f"{missing_quantity} units of item {item_id} reported as "
+                                                        f"missing.")
+        else:
+            messagebox.showwarning("Report Missing Items", "Please enter a valid missing quantity (greater than 0).")
+    else:
+        messagebox.showerror("Report Missing Items", f"Item with ID {item_id} not found in inventory.")
 
 
-def expiry_date(month: int, year: int) -> tuple:
-    """
-    Returns the expiry date as a tuple of (month, year) for [food] category items.
-    Validate month and year to ensure the date is valid
-    """
-    if not 1 <= month <= 12:
-        raise ValueError("Month must be between 1 and 12.")
-    if year < 2020:  # Assume the inventory system started after 2020
-        raise ValueError("Year must be greater than 2020.")
-    return month, year
+def sell_item():
+    item_id = simpledialog.askinteger("Sell Item", "Enter item ID for the item sold:")
+    if item_id in inventory_data:
+        sold_quantity = simpledialog.askinteger("Sell Item", "Enter the quantity sold:")
+        if sold_quantity is not None and sold_quantity > 0:
+            # Get current sales for 2024 or default to 0
+            curr_sold_2024 = inventory_data[item_id].get("2024_Sales", 0)
+            # Add sold quantity to existing 2024_Sales
+            inventory_data[item_id]["2024_Sales"] = curr_sold_2024 + sold_quantity
+
+            if inventory_data[item_id]["quantity"] >= sold_quantity:
+                inventory_data[item_id]["quantity"] -= sold_quantity
+
+                # Update the CSV file with the sold quantity and updated 2024_Sales
+                update_csv(item_id, inventory_data[item_id]["quantity"], inventory_data[item_id]["2024_Sales"])
+
+                messagebox.showinfo("Sell Item", f"{sold_quantity} units of item {item_id} sold.")
+            else:
+                messagebox.showwarning("Sell Item", f"Insufficient quantity for item {item_id}.")
+        else:
+            messagebox.showwarning("Sell Item", "Please enter a valid quantity (greater than 0).")
+    else:
+        messagebox.showerror("Sell Item", f"Item with ID {item_id} not found in inventory.")
 
 
-def size_exist(XS: str, S: str, M: str, L: str, XL: str) -> str:
-    """
-    Check if sizes XS, S, M, L, and XL are available for [clothing] items.
-    Returns True if any of the sizes are available, False otherwise.
-    """
-    # Example: Check if at least one size is available
-    if XS or S or M or L or XL:
-        return "Available"
-    return "Not Available"
+read_csv('SalesKaggle3new.csv')
+open_inventory()
 
-
-def shoe_size(us_size: float, eu_size: float) -> str:
-    """
-    Determines the shoe size category based on US and Euro sizing.
-    Returns the category of shoe size (e.g., 'Small', 'Medium', 'Large').
-    """
-    if not us_size or not eu_size:
-        return 'Invalid size'
-
-    if 8 <= us_size <= 12 or 41 <= eu_size <= 45:
-        return 'Medium'
-    elif us_size < 8 or eu_size < 41:
-        return 'Small'
-    elif us_size > 12 or eu_size > 45:
-        return 'Large'
-
-    return 'Other'
-
-
-read_csv('SalesKaggle3_2.csv')
 if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()
