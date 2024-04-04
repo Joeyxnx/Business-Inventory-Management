@@ -43,35 +43,35 @@ def login(master):
                 return False
 
 
-def main(root):
-    root.deiconify
-    root = tk.Tk()
-    root.withdraw()
+def main():
+    root_2 = tk.Tk()
+    root_2.withdraw()
 
     choice = messagebox.askquestion("Start", "Do you have an account?",
                                     icon='question')
     if choice == 'yes':
-        if login(root):
-            root.deiconify()
-            open_inventory(root) #open if pass
+        if login(root_2):
+            #root.deiconify()
+            open_inventory() #open if pass
+
         else:
             messagebox.showerror("Login Failed", "The login was unsuccessful.") # if fail
-            root.destroy()
+            root_2.destroy()
     elif choice == 'no': # user doesnt have an account
-        if create_user_gui(root):
+        if create_user_gui(root_2):
             messagebox.showinfo("Registration",
                                 "Please log in with your new credentials.")
-            if login(root):
-                root.deiconify()
-                open_inventory(root)
+            if login(root_2):
+                #root.deiconify()
+                open_inventory()
             else:
                 messagebox.showerror("Login Failed",
                                      "The login was unsuccessful.")
-                root.destroy()
+                root_2.destroy()
         else:
-            root.destroy()
+            root_2.destroy()
 
-    root.mainloop()
+    root_2.mainloop()
 
 
 def create_user_gui(master):
@@ -131,19 +131,11 @@ def read_csv(filename):
 
 # Function to open the inventory management system GUI
 def open_inventory():
-    root = tk.Tk()
-    root.title("Inventory Management System")
-
-    # Create a modern theme
-    style = ttk.Style()
-    style.theme_use('clam')  # Use 'clam' theme for a modern look
-    style.configure('TButton', font=('Helvetica', 12), padding=10, background='#3498db', foreground='black')
-    style.configure('TLabel', font=('Helvetica', 12), padding=5)
-    style.configure('Treeview', font=('Helvetica', 10), padding=10)
-
+    root_1 = tk.Tk()
+    root_1.title("Inventory Management System")
     # Create Menu
-    menu_bar = tk.Menu(root)
-    root.config(menu=menu_bar)
+    menu_bar = tk.Menu(root_1)
+    root_1.config(menu=menu_bar)
 
     # Add Menu Items
     file_menu = tk.Menu(menu_bar, tearoff=0)
@@ -151,7 +143,7 @@ def open_inventory():
     menu_bar.add_cascade(label="File", menu=file_menu)
 
     # Create Left Frame for View, Add, Remove buttons
-    left_frame = tk.Frame(root)
+    left_frame = tk.Frame(root_1)
     left_frame.pack(side="left", padx=20, pady=20)
 
     view_inventory_button = ttk.Button(left_frame, text="View Inventory", command=view_inventory_all)
@@ -162,7 +154,7 @@ def open_inventory():
     remove_item_button.pack(fill=tk.BOTH, padx=10, pady=10)
 
     # Create Right Frame for other buttons
-    right_frame = tk.Frame(root)
+    right_frame = tk.Frame(root_1)
     right_frame.pack(side="right", padx=20, pady=20)
 
     plot_sales_button = ttk.Button(right_frame, text="2022/2023 Sales Data", command=plot_sales)
@@ -178,7 +170,7 @@ def open_inventory():
     sell_item_button = ttk.Button(right_frame, text="Sell Item", command=sell_item)
     sell_item_button.pack(fill=tk.BOTH, padx=10, pady=10)
 
-    root.mainloop()
+    root_1.mainloop()
 
 
 def view_inventory_all():
@@ -407,10 +399,11 @@ def sell_item():
         messagebox.showerror("Sell Item", f"Item with ID {item_id} not found in inventory.")
 
 
-read_csv('SalesKaggle3new.csv')
-open_inventory()
-
 if __name__ == "__main__":
+    read_csv('SalesKaggle3new.csv')
     root = tk.Tk()
     root.withdraw()
-    main(root)
+    main()
+
+
+
