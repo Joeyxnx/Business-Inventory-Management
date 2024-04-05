@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 import csv
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # Used bcrypt for password hashing
 # https://pypi.org/project/bcrypt/
@@ -135,22 +136,56 @@ def create_user(username, password):
 
 
 def read_csv(filename):
-    with open(filename, newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        for row in reader:
-            item_id = int(row["Product_id"])
-            item_name = str(row['Name'])
-            quantity = int(row['ItemCount'])
-            price = float(row['PriceReg'])
-            category = str(row['Category'])
-            inventory_data[item_id] = {'item_name': item_name, "quantity": quantity, 'price': price,
-                                       'category': category}
+    global inventory_data
+    df = pd.read_csv(filename)
+
+    # Calculate lifetime sales for each item
+    df['Lifetime_Sold'] = df['2022_Sales'] + df['2023_Sales'] + df['2024_Sales']
+
+    for index, row in df.iterrows():
+        item_id = int(row["Product_id"])
+        item_name = str(row['Name'])
+        quantity = int(row['ItemCount'])
+        price = float(row['PriceReg'])
+        category = str(row['Category'])
+        lifetime_sold = int(row['Lifetime_Sold'])
+        inventory_data[item_id] = {'item_name': item_name, "quantity": quantity, 'price': price,
+                                   'category': category, 'lifetime_sold': lifetime_sold}
 
 
 # Function to open the inventory GUI
 def open_inventory():
+    def show_lifetime_sales():
+        lifetime_sales_window = tk.Toplevel(root)
+        lifetime_sales_window.title("Lifetime Sales Data")
 
-    # will force force the program to exit when called
+        # Create Treeview
+        tree = ttk.Treeview(lifetime_sales_window, columns=("Item ID", "Item Name", "Lifetime Sales"),
+                            show="headings")
+        tree.heading("Item ID", text="Item ID")
+        tree.heading("Item Name", text="Item Name")
+        tree.heading("Lifetime Sales", text="Lifetime Sales")
+
+        # Center the Headings
+        for col in tree["columns"]:
+            tree.column(col, anchor="center")
+
+        # Insert lifetime sales data into Treeview
+        for item_id, details in inventory_data.items():
+            item_name = details["item_name"]
+            lifetime_sold = details.get("lifetime_sold", 0)  # Check if lifetime_sold key exists
+            row_values = (item_id, item_name, lifetime_sold)
+            tree.insert("", "end", values=row_values)
+
+        # Expand the Treeview to fill the window
+        tree.pack(expand=True, fill=tk.BOTH)
+
+        # Add scrollbar
+        scrollbar = ttk.Scrollbar(lifetime_sales_window, orient="vertical", command=tree.yview)
+        scrollbar.pack(side="right", fill="y")
+        tree.configure(yscrollcommand=scrollbar.set)
+
+    # will force the program to exit when called
     def exit_program():
         root.quit()
         root.destroy()
@@ -186,6 +221,10 @@ def open_inventory():
     right_frame.pack(side="right", padx=20, pady=20)
 
     # Buttons
+
+    lifetime_sales_button = ttk.Button(right_frame, text="Show Lifetime Sales Data", command=show_lifetime_sales)
+    lifetime_sales_button.pack(fill=tk.BOTH, padx=10, pady=10)
+
     plot_sales_button = ttk.Button(right_frame, text="2022/2023 Sales Data", command=plot_sales)
     plot_sales_button.pack(fill=tk.BOTH, padx=10, pady=10)
 
@@ -274,11 +313,16 @@ def add_item():
             inventory_data[item_id] = {"item_name": item_name, "quantity": item_quantity, "price": item_price,
                                        "category": item_category, "MissingQty": 0, "2024_Sales": 0}
 
+            # Calculate lifetime sold for the new item
+            lifetime_sold = inventory_data[item_id]["2024_Sales"]
+            inventory_data[item_id]["lifetime_sold"] = lifetime_sold
+
             # Append the new item to the CSV file
             with open('SalesKaggle3new.csv', mode='a', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow([item_id, item_name, item_price, item_quantity, item_category, 0, 0, 0, 0])
-                # Write 0 for MissingQty and 2024_Sales
+                writer.writerow([item_id, item_name, item_price, item_quantity, item_category,
+                                 inventory_data[item_id]["MissingQty"], 0, 0, lifetime_sold])
+                # Write 0 for 2024_Sales since it's a new item
 
             messagebox.showinfo("Add Item", f"{item_name} added to inventory.")
 
@@ -310,7 +354,6 @@ def remove_item():
 
 
 def plot_sales():
-
     sales_2022 = []
     sales_2023 = []
 
@@ -340,7 +383,6 @@ def plot_sales():
 
 
 def plot_new_sales():
-
     item_ids = []
     sales_2024 = []
 
@@ -389,22 +431,25 @@ def report_missing_items():
 
             # Read the CSV data and update the missing quantity
             with open('SalesKaggle3new.csv', mode='r', newline='') as csvfile:
-                reader = csv.reader(csvfile)
-                header = next(reader)
-                rows = [row for row in reader]
-                for row in rows:
-                    if int(row[0]) == item_id:
-                        row[3] = inventory_data[item_id]["quantity"]  # Update quantity in CSV
-                        row[-2] = inventory_data[item_id]["MissingQty"]  # Update MissingQty in CSV
-                        break
+                reader = csv.DictReader(csvfile)
+                header = reader.fieldnames
+                missing_qty_index = header.index('MissingQty')  # Find the index of 'MissingQty'
+
+                rows = []
+                for row in reader:
+                    if int(row['Product_id']) == item_id:
+                        row['ItemCount'] = inventory_data[item_id]["quantity"]  # Update quantity in CSV
+                        row['MissingQty'] = inventory_data[item_id]["MissingQty"]  # Update MissingQty in CSV
+                    rows.append(row)
 
             # Rewrite the CSV file with updated quantity and MissingQty
             with open('SalesKaggle3new.csv', mode='w', newline='') as csvfile:
-                writer = csv.writer(csvfile)
-                writer.writerow(header)
+                writer = csv.DictWriter(csvfile, fieldnames=header)
+                writer.writeheader()
                 writer.writerows(rows)
 
-            messagebox.showinfo("Report Missing Items", f"{missing_quantity} units of item {item_id} reported as missing.")
+            messagebox.showinfo("Report Missing Items",
+                                f"{missing_quantity} units of item {item_id} reported as missing.")
         else:
             messagebox.showwarning("Report Missing Items", "Please enter a valid missing quantity (greater than 0).")
     else:
@@ -424,22 +469,23 @@ def sell_item():
             if inventory_data[item_id]["quantity"] >= sold_quantity:
                 inventory_data[item_id]["quantity"] -= sold_quantity
 
-                # Read the CSV data and update the sold quantity and 2024_Sales
-                with open('SalesKaggle3new.csv', mode='r', newline='') as csvfile:
-                    reader = csv.reader(csvfile)
-                    header = next(reader)
-                    rows = [row for row in reader]
-                    for row in rows:
-                        if int(row[0]) == item_id:
-                            row[3] = inventory_data[item_id]["quantity"]  # Update quantity in CSV
-                            row[-1] = inventory_data[item_id]["2024_Sales"]  # Update 2024_Sales in CSV
-                            break
+                # Recalculate Lifetime_Sold after selling
+                inventory_data[item_id]["lifetime_sold"] += sold_quantity
 
-                # Rewrite the CSV file with updated quantity and 2024_Sales
-                with open('SalesKaggle3new.csv', mode='w', newline='') as csvfile:
-                    writer = csv.writer(csvfile)
-                    writer.writerow(header)
-                    writer.writerows(rows)
+                # Read the CSV data
+                filename = 'SalesKaggle3new.csv'
+                df = pd.read_csv(filename)
+
+                # Update the CSV data for the sold item
+                for index, row in df.iterrows():
+                    if row['Product_id'] == item_id:
+                        df.at[index, 'ItemCount'] = inventory_data[item_id]["quantity"]
+                        df.at[index, '2024_Sales'] = inventory_data[item_id]["2024_Sales"]
+                        df.at[index, 'Lifetime_Sold'] = inventory_data[item_id]["lifetime_sold"]
+                        break
+
+                # Write the updated CSV data back to the file
+                df.to_csv(filename, index=False)
 
                 messagebox.showinfo("Sell Item", f"{sold_quantity} units of item {item_id} sold.")
             else:
@@ -448,7 +494,6 @@ def sell_item():
             messagebox.showwarning("Sell Item", "Please enter a valid quantity (greater than 0).")
     else:
         messagebox.showerror("Sell Item", f"Item with ID {item_id} not found in inventory.")
-
 
 
 if __name__ == "__main__":
