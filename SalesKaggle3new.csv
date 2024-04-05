@@ -1,8 +1,8 @@
 Product_id,Name,PriceReg,ItemCount,Category,2022_Sales,2023_Sales,MissingQty,2024_Sales
-1,Banana,35.66,295,Food,32,53,0,15
-2,Apple,32.99,21,Food,50,74,0,5
-3,Mango,129.95,17,Food,34,75,0,5
-4,Nutella,64.95,10,Food,14,85,0,2
+1,Banana,35.66,295,Food,32,53,0,0
+2,Apple,32.99,21,Food,50,74,0,0
+3,Mango,129.95,17,Food,34,75,0,0
+4,Nutella,64.95,10,Food,14,85,0,0
 5,Rice,120.39,69,Food,29,13,0,0
 6,Chips,126.2,33,Food,21,71,0,0
 7,Popcorn,167.75,20,Food,32,18,0,0
