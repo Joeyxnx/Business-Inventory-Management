@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import messagebox, simpledialog, ttk
 import csv
 import matplotlib.pyplot as plt
+# import pandas as pd
 
 # Used bcrypt for password hashing
 # https://pypi.org/project/bcrypt/
@@ -150,7 +151,7 @@ def read_csv(filename):
 # Function to open the inventory GUI
 def open_inventory():
 
-    # will force force the program to exit when called
+    # will force the program to exit when called
     def exit_program():
         root.quit()
         root.destroy()
@@ -245,14 +246,10 @@ def add_item():
                                                        "Item exists in DB. Enter additional quantity:")
                 if new_quantity is not None:
                     inventory_data[item_id]["quantity"] += new_quantity
-                    inventory_data[item_id].setdefault("MissingQty", 0)  # Initialize MissingQty if not present
-                    inventory_data[item_id].setdefault("2024_Sales", 0)  # Initialize 2024_Sales if not present
-                    # Update the CSV file with the new quantity and retain 2024_Sales
-                    update_csv(item_id, inventory_data[item_id]["quantity"], inventory_data[item_id]["2024_Sales"])
                     messagebox.showinfo("Update Quantity", f"Quantity updated for item '{item_name}'.")
                     return  # Exit the function after updating quantity
 
-        # Item does not exist, add it to inventory with MissingQty and 2024_Sales initialized
+        # Item does not exist, add it to inventory with MissingQty and 2024_Sales initialized to 0
         item_id = len(inventory_data) + 1  # Generate a new item ID
         item_quantity = simpledialog.askinteger("Add Item", "Enter item quantity:")
         item_price = simpledialog.askfloat("Add Item", "Enter item price:")
@@ -261,31 +258,29 @@ def add_item():
         if item_quantity is not None and item_price is not None and item_category:
             inventory_data[item_id] = {"item_name": item_name, "quantity": item_quantity, "price": item_price,
                                        "category": item_category, "MissingQty": 0, "2024_Sales": 0}
-            # Initialize MissingQty and 2024_Sales
             # Append the new item to the CSV file with MissingQty and 2024_Sales set to 0
             with open('SalesKaggle3new.csv', mode='a', newline='') as csvfile:
                 writer = csv.writer(csvfile)
-                writer.writerow([item_id, item_name, item_price, item_quantity, item_category, 0, 0])
+                writer.writerow([item_id, item_name, item_price, item_quantity, item_category, 0, 0, 0, 0])
                 # Write 0 for MissingQty and 2024_Sales
             messagebox.showinfo("Add Item", f"{item_name} added to inventory.")
 
 
-def update_csv(item_id, quantity, curr_sold_2024):
+def update_csv(item_id, quantity, curr_sold_2024, missing_qty):
+    rows = []
     with open('SalesKaggle3new.csv', mode='r', newline='') as csvfile:
         reader = csv.reader(csvfile)
-        # Skip the header row
         header = next(reader)
-        rows = [row for row in reader]
-        for row in rows:
+        for row in reader:
             if int(row[0]) == item_id:
                 row[3] = quantity  # Update quantity in CSV
+                row[-2] = missing_qty  # Update MissingQty in CSV
                 row[-1] = curr_sold_2024  # Update 2024_Sales in CSV
-                break
+            rows.append(row)
 
-    # Rewrite the CSV file with updated quantity and 2024_Sales
+        # Rewrite the CSV file with updated quantity and 2024_Sales
     with open('SalesKaggle3new.csv', mode='w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        # Write the header row back
         writer.writerow(header)
         writer.writerows(rows)
 
@@ -386,23 +381,24 @@ def plot_new_sales():
 
 def report_missing_items():
     item_id = simpledialog.askinteger("Report Missing Items", "Enter item ID for the missing item:")
-    if item_id in inventory_data:
-        missing_quantity = simpledialog.askinteger("Report Missing Items", "Enter the missing quantity:")
-        if missing_quantity is not None and missing_quantity > 0:
-            # Initialize MissingQty if not present
-            inventory_data[item_id].setdefault("MissingQty", 0)
-            inventory_data[item_id]["quantity"] -= missing_quantity
-            inventory_data[item_id]["MissingQty"] += missing_quantity
-
-            # Update the CSV file with the missing quantity
-            update_csv(item_id, inventory_data[item_id]["quantity"], inventory_data[item_id]["MissingQty"])
-
-            messagebox.showinfo("Report Missing Items", f"{missing_quantity} units of item {item_id} reported as "
-                                                        f"missing.")
-        else:
-            messagebox.showwarning("Report Missing Items", "Please enter a valid missing quantity (greater than 0).")
-    else:
+    if item_id not in inventory_data:
         messagebox.showerror("Report Missing Items", f"Item with ID {item_id} not found in inventory.")
+        return
+
+    missing_quantity = simpledialog.askinteger("Report Missing Items", "Enter the missing quantity:")
+    if missing_quantity is None or missing_quantity <= 0:
+        messagebox.showwarning("Report Missing Items", "Please enter a valid missing quantity (greater than 0).")
+        return
+
+    inventory_data[item_id].setdefault("MissingQty", 0)
+    inventory_data[item_id]["MissingQty"] += missing_quantity
+    inventory_data[item_id].setdefault("2024_Sales", 0)  # Ensure "2024_Sales" key exists
+    inventory_data[item_id]["quantity"] -= missing_quantity
+
+    update_csv(item_id, inventory_data[item_id]["quantity"], inventory_data[item_id]["2024_Sales"],
+               inventory_data[item_id]["MissingQty"])
+
+    messagebox.showinfo("Report Missing Items", f"{missing_quantity} units of item {item_id} reported as missing.")
 
 
 def sell_item():
@@ -435,4 +431,3 @@ if __name__ == "__main__":
     root = tk.Tk()
     root.withdraw()
     main()
-
