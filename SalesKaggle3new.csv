@@ -1,0 +1,41 @@
+Product_id,Name,PriceReg,ItemCount,Category,2022_Sales,2023_Sales,MissingQty,2024_Sales
+1,Banana,35.66,97,Food,32,53,0,0
+2,Apple,32.99,21,Food,50,74,0,0
+3,Mango,129.95,17,Food,34,75,0,0
+4,Nutella,64.95,10,Food,14,85,0,0
+5,Rice,120.39,69,Food,29,13,0,0
+6,Chips,126.2,33,Food,21,71,0,0
+7,Popcorn,167.75,20,Food,32,18,0,0
+8,Cookies,94.6,33,Food,29,76,0,0
+9,Brownies,53.95,37,Food,45,20,0,0
+10,Iphone 15,399.95,34,Electronic,51,96,0,0
+11,Iphone 14,42.95,23,Electronic,37,100,0,0
+12,Laptop i9,97.95,34,Electronic,94,28,0,0
+13,Laptop i7,70.95,47,Electronic,87,71,0,0
+14,Ps5,50,14,Electronic,43,70,0,0
+15,Xbox,46.75,38,Electronic,26,92,0,0
+16,Samsung S20,44.95,85,Electronic,64,60,0,0
+17,Apple Watch,168.25,69,Electronic,59,33,0,0
+18,Speaker,224.95,25,Electronic,22,84,0,0
+19,Nike T-Shirt,77.95,39,Clothing,16,68,0,0
+20,Adidas T-Shirt,74.95,29,Clothing,45,36,0,0
+21,Nike Joggers,123.95,33,Clothing,57,34,0,0
+22,Adidas Joggers,215.31,73,Clothing,16,52,0,0
+23,Levi Jeans,106.67,23,Clothing,23,62,0,0
+24,Polo Shirt,69.95,68,Clothing,89,15,0,0
+25,Nike Shoes,65.25,25,Clothing,61,34,0,0
+26,Apple Juice,117,23,Beverage,41,42,0,0
+27,Orange Juice,17,72,Beverage,101,23,0,0
+28,Mango Juice,20,17,Beverage,15,108,0,0
+29,Tomato Juice,62,85,Beverage,182,103,0,0
+30,Coca-Cola,131,38,Beverage,84,81,0,0
+31,Sprite,142,52,Beverage,111,137,0,0
+32,Orange Crush,125,46,Beverage,163,49,0,0
+33,Cramberry Crush,32,29,Beverage,48,174,0,0
+34,Fork,117,11,Appliance,59,36,0,0
+35,Spoon,46,59,Appliance,111,194,0,0
+36,Knives,142,11,Appliance,58,62,0,0
+37,Spatula,62,57,Appliance,187,81,0,0
+38,Fridge,45,39,Appliance,154,167,0,0
+39,Oven,30,22,Appliance,197,197,0,0
+40,Microwave,29,71,Appliance,181,158,0,0
