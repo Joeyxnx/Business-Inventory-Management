@@ -1,4 +1,4 @@
-# **Retail Store Inventory Management System (CCT211 course project)**
+# **Retail Store Inventory Management System
 
 ## Python tkinter project in a nutshell (introduction)
 
